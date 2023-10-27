@@ -29,6 +29,7 @@ class EmployeeManager:
         # Процесс создания таблицы Employee
         cursor = self.db.cursor
         cursor.execute("""CREATE TABLE IF NOT EXISTS Employee(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT,
                     phone TEXT,
                     email TEXT,
@@ -37,7 +38,7 @@ class EmployeeManager:
         self.db.commit()
 
     def create_widgets(self):
-        # Кнопка добавления
+        # Создание виджетов
         self.add_button = tk.Button(self.master, text="Добавить сотудника",
                                     command=self.add_employee)
         self.add_button.pack(pady=10)
@@ -67,10 +68,11 @@ class EmployeeManager:
         self.last_action = None  # Для хранения действия
 
     def add_employee(self):
-        name = simpledialog.askstring("Input", "Введите полное имя сотрудника")
-        phone = simpledialog.askstring("Input", "Введите номер телефона сотрудника")
-        email = simpledialog.askstring("Input", "Введите электронную почту сотрудника")
-        salary = simpledialog.askinteger("Input", "Введите зарплату сотрудника")
+        # Добавление сотрудника
+        name = simpledialog.askstring("Input", "Введите полное имя сотрудника:")
+        phone = simpledialog.askstring("Input", "Введите номер телефона сотрудника:")
+        email = simpledialog.askstring("Input", "Введите электронную почту сотрудника:")
+        salary = simpledialog.askinteger("Input", "Введите зарплату сотрудника:")
 
         cursor = self.db.cursor()
         cursor.execute("INSERT INTO Employee (name, phone, email, salary) VALUES (?, ?, ?, ?)", (name, phone, email, salary))
@@ -80,10 +82,10 @@ class EmployeeManager:
         self.last_action = "add"
 
     def update_employee(self):
-        employee_name = simpledialog.askstring("Input", "Введите полное имя сотруника, поля которого хотите изменить")
+        employee_id = simpledialog.askstring("Input", "Введите ID сотрудника:")
 
         cursor = self.db.cursor()
-        cursor.execute("SELECT * FROM Employee WHERE name=?", (employee_name))
+        cursor.execute("SELECT * FROM Employee WHERE name=?", (employee_id))
         employee = cursor.fetchone()
 
         if employee:
@@ -92,19 +94,19 @@ class EmployeeManager:
             email = simpledialog.askstring("Input", "Введите электронную почту сотрудника:", initialvalue=employee[3])
             salary = simpledialog.askinteger("Input", "Введите зарплату сотрудника:", initialvalue=employee[4])
 
-            cursor.execute("UPDATE Employee SET name=?, phone=?, email=?, salary=? WHERE name=?", (name, phone, email, salary, employee_name))
+            cursor.execute("UPDATE Employee SET name=?, phone=?, email=?, salary=? WHERE id=?", (name, phone, email, salary, employee_id))
             self.db.commit()
             self.update_treeview()
             self.last_action = "update"
 
         else:
-            messagebox.showerror("Error", "Employee not found.")
+            messagebox.showerror("Error", "Работник не найден.")
 
     def delete_employee(self):
-        employee_name = simpledialog.askinteger("Input", "Введите полное имя сотрудника:")
+        employee_id = simpledialog.askinteger("Input", "Введите ID сотрудника:")
 
         cursor = self.db.cursor()
-        cursor.execute("DELETE FROM Employee WHERE name=?", (employee_name))
+        cursor.execute("DELETE FROM Employee WHERE id=?", (employee_id))
         self.db.commit()
         self.update_treeview()
         self.last_action = "delete"
@@ -127,9 +129,9 @@ class EmployeeManager:
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-            cursor = self.db.cursor()
-            cursor.execute("SELECT * FROM Employee")
-            all_employees = cursor.fetchall()
+        cursor = self.db.cursor()
+        cursor.execute("SELECT * FROM Employee")
+        all_employees = cursor.fetchall()
 
         for employee in all_employees:
             self.tree.insert("", "end", values=employee)
@@ -138,9 +140,10 @@ class EmployeeManager:
         # Действие при двойном клике
         item = self.tree.selection()[0]
         employee_name = self.tree.item(item, "values")[0]
-        messagebox.showinfo("Имя работника", f"Имя работника: {employee_name}")
+        messagebox.showinfo("Employee ID", f"Имя работника: {employee_name}")
 
     def undo_action(self):
+        # Отмена действия
         if self.last_action == "add":
             messagebox.showinfo("Undo", "Отменено добавление сотрудника")
         elif self.last_action == "update":
